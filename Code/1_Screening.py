@@ -12,37 +12,7 @@ import time
 import random
 import string
 
-
-## Set meta-parameters
-debug = False # Run fewer articles for debugging purposes
-
-n_reviewers = 2 # Number of AI agents to independently ask
-
-skip_criteria = True # Will skip remaining screening criteria if one fails across all AI agents
-
-rand_seed = True # Insert random string into prompts for uniqueness
-
-proj_location = "CBFM" # Directory name of project.
-
-screen_name = 'pilot' # Name of spreadsheet with Abstract and Title *without extensions
-
-note = '' # This will append a note to the output files
-
-openAI_key = "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" # Insert your OpenAI API key
-
-model_to_use = "gpt-3.5-turbo-0301" # Currently only set-up for "gpt-3.5-turbo-0301"
-
-temperature = 0 # increasing this number will lead to less 'truthful' responses
-
-n_retries = 10 # Number of times to re-query OpenAI in event of disconnection
-
-save_frequency = 3 # How often to save intermediate results.
-
 exec(open(proj_location + '/set-up.py').read()) # Import Screening Criteria Text
-
-
-## Set-up Screening Run
-excel_sheet = '1_' + screen_name + '.xls'
 
 papers = pd.read_excel(proj_location + '/' + excel_sheet).replace(np.nan, '')  
 

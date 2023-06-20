@@ -39,7 +39,7 @@ excel_sheet = '1_' + screen_name + '.xls'
 
 note = '' # This will append a note to the output files
 
-openAI_key = "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" # Insert your OpenAI API key
+openAI_key = "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" # Insert your OpenAI API key
 
 model_to_use = "gpt-3.5-turbo-0301" # Currently only set-up for "gpt-3.5-turbo-0301"
 

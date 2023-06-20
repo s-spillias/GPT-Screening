@@ -1,6 +1,6 @@
  # Import Screening Criteria Text
 
-papers = pd.read_excel('./' + excel_sheet).replace(np.nan, '')  
+papers = pd.read_excel('./Input/' + excel_sheet).replace(np.nan, '')  
 
 if debug: 
     n_studies = 5

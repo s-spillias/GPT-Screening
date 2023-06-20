@@ -12,6 +12,8 @@ import time
 import random
 import string
 
+proj_location = "CBFM" # Directory name of project.
+
 exec(open(proj_location + '/set-up.py').read()) # Import Screening Criteria Text
 
 papers = pd.read_excel(proj_location + '/' + excel_sheet).replace(np.nan, '')  

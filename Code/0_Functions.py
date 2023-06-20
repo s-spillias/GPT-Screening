@@ -123,6 +123,8 @@ def add_criteria(Criteria):
 
 
 def save_results(screen_name):
+    if not os.path.exists(proj_location +'/Output'):
+        os.makedirs(proj_location +'/Output')
     if debug:
         new_proj_location = proj_location + "/debug"
     else:

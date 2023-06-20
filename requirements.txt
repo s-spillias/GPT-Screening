@@ -2,3 +2,4 @@ numpy
 openai==0.27.0
 pandas
 xlrd
+nltk

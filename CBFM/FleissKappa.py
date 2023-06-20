@@ -3,7 +3,6 @@ import xlrd
 import glob
 import pandas as pd
 
-dir = 'CBFM'
 ####################################
 # Inter-rater reliability
 
@@ -17,12 +16,12 @@ def get_k(data):
             taskdata.append([rater_id, str(item_id), str(rating)])
 
     ratingtask = agreement.AnnotationTask(data=taskdata)
-    print("kappa " +str(ratingtask.kappa()))
+    #print("kappa " +str(ratingtask.kappa()))
     print("fleiss " + str(ratingtask.multi_kappa()))
-    print("alpha " +str(ratingtask.alpha()))
-    print("scotts " + str(ratingtask.pi()))
+   # print("alpha " +str(ratingtask.alpha()))
+ #   print("scotts " + str(ratingtask.pi()))
 
-all_files = glob.glob(dir + "/*kappa*")
+all_files = glob.glob("./Paper-Results/*kappa*")
 #human = pd.read_csv(all_files[1])
 # Get independent kappas
 for file in all_files:
@@ -40,6 +39,5 @@ for column_name in all_cols:
     print(column_name)
     column_data = all_cols[column_name]
     join = copy.copy(human)
-    len(join)
     join.append(column_data)
     get_k(join)

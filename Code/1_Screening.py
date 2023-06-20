@@ -1,22 +1,6 @@
-# Author: Scott Spillias
-# Email: scott.spillias@csiro.au
+ # Import Screening Criteria Text
 
-## Import Packages
-import os
-import xlrd
-import pandas as pd 
-pd.options.mode.chained_assignment = None  # default='warn'
-import re
-import numpy as np
-import time
-import random
-import string
-
-proj_location = "CBFM" # Directory name of project.
-
-exec(open(proj_location + '/set-up.py').read()) # Import Screening Criteria Text
-
-papers = pd.read_excel(proj_location + '/' + excel_sheet).replace(np.nan, '')  
+papers = pd.read_excel('./' + excel_sheet).replace(np.nan, '')  
 
 if debug: 
     n_studies = 5
@@ -29,11 +13,11 @@ decision_numeric = {'Yes': 2, 'No': 0, 'Maybe': 2} # How should each response be
 choices = responses.split(' or ') # used to ensure consistency in output format.
 
 # Import Functions
-exec(open('Code/0_Functions.py').read())
+exec(open('../Code/0_Functions.py').read())
 
 # Begin Screening
 
-info = papers[['Title','Abstract']]
+info = pd.concat([papers.filter(like=f'Title'),papers.filter(like=f'Abstract')],axis = 1)
 info = info[0:n_studies] # For Debugging
 print('\nAssessing ' + str(len(info)) + ' Papers')
 info[f"Accept"] = "NA"    
@@ -45,8 +29,7 @@ for i in range(0,len(info[f"Title"].values)):
     if i % save_frequency == 0: # Save intermediate results in case of disconnection or other failure.
         print('Saving Intermediate Results...')
         summary_decisions_new = pd.concat([summary_decisions,info_all[0].filter(like=f'Deliberation - SC')], axis = 1)
-        new_proj_location = proj_location
-        file_path = new_proj_location + '/Output/2a_' + screen_name +'_screen-summary'
+        file_path = './Output/2a_' + screen_name +'_screen-summary'
         try:
             save_results(screen_name)
         except:

@@ -1,5 +1,5 @@
 
-exec(open('Code/app.py').read())
+#exec(open('../Code/app.py').read())
 
 def generate_text(openAI_key, prompt, n_reviewers, model_to_use):
     openai.api_key = openAI_key
@@ -123,19 +123,15 @@ def add_criteria(Criteria):
 
 
 def save_results(screen_name):
-    if not os.path.exists(proj_location +'/Output'):
-        os.makedirs(proj_location +'/Output')
-    if debug:
-        new_proj_location = proj_location + "/debug"
-    else:
-        new_proj_location = proj_location
-    file_path = new_proj_location + '/Output/2a_' + screen_name +'_screen-summary'
+    if not os.path.exists('./Output'):
+        os.makedirs('./Output')
+    file_path = './Output/2a_' + screen_name +'_screen-summary'
     try:
         summary_decisions_new.to_csv(file_path + '.csv', encoding='utf-8', index=True)
     except:
         print("Couldn't Save...is file open?")
     for reviewer in range(len(info_all)):
        # index = 1
-        file_path = new_proj_location + '/Output/2_' + screen_name +'_screened_' + note + "-" + str(reviewer)
+        file_path = './Output/2_' + screen_name +'_screened_' + note + "-" + str(reviewer)
         print("Saving at " + file_path + '.csv')
         info_all[reviewer].to_csv(file_path + '.csv', encoding='utf-8', index=True)

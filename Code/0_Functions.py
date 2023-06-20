@@ -46,7 +46,7 @@ def get_data(prompt,content,n_reviewers):
                 rand_string = ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(10))
             else:
                 rand_string = rand_string
-            print(rand_string)
+         #   print(rand_string)
             new_prompt = f"Ignore this string: {rand_string}" + "\n\n" + prompt
             #print(new_prompt)
             # Call OpenAI
@@ -121,58 +121,19 @@ def add_criteria(Criteria):
             "\nSC: Final Response; One sentence of reasoning."
     return base_prompt
 
-""" #                    f"\nShould a paper with the following  be included in your research project?"
-def synth_decisions(decisions, reasons, responses, SC):
-    prompt = "You are a reviewer for a research project and have been asked to assess whether the "\
-        "given a paper should be included in a systematic review.\n"
-   # prompt += '\n' + f'Topic: ' + topic
-    prompt += '\n\n' + f"Another reviewer has assessed the screening criteria (SC) and has suggested whether to include the paper based on their Findings (copied below)."\
-    f"Task: Please assess whether these Findings demonstrate strong evidence that the Screening Criteria are met by returning the following elements, and provide a final determination as to whether the paper should be included. "\
-    " In assessing, do not re-interpret the SC, simply assess the SC at face value.\n"\
-    "We are only interested in papers that strictly meet the SC.\n"\
-    "If not enough information is available, be inclusive as we can follow-up at a later stage."
-    "Elements to return: Initial Response, Reflection on Initial Response, and Final Response."\
-    " Here is an example of how your response should look:\n"\
-    "Format: \n"\
-    f"Initial Response: Choose either {responses}; Short explanation as rationale."\
-    "Reflection: Reflect on the Findings and whether the Initial Response is correct. Be concise."\
-    f"Final Response: Choose either {responses}; Short explanation based on relection.\n"\
-    f"For the Final Response, choose either a {responses}. "\
-    "followed by a semicolon and a single sentence explanation for your reasoning."\
-    #"\nSC: Final Response; One sentence of reasoning.\n\n"
-    if SC is not None:
-        prompt += '\n' + f'SC: ' + SC
-    prompt += "Findings:\n"
-    for decision,rationale in zip(decisions, reasons):
-        if pd.isnull(decision):
-            decision = ""
-        if pd.isnull(rationale):
-            rationale = ""
-
-        dat = rationale + "\n"
-
-        prompt += dat
-    return(generate_text(openAI_key, prompt, 1, model_to_use)) """
-
 
 def save_results(screen_name):
     if debug:
-        new_pdf_location = pdf_location + "/debug"
+        new_proj_location = proj_location + "/debug"
     else:
-        new_pdf_location = pdf_location
-    file_path = new_pdf_location + '/2a_' + screen_name +'_screen-summary'
+        new_proj_location = proj_location
+    file_path = new_proj_location + '/Output/2a_' + screen_name +'_screen-summary'
     try:
         summary_decisions_new.to_csv(file_path + '.csv', encoding='utf-8', index=True)
     except:
         print("Couldn't Save...is file open?")
     for reviewer in range(len(info_all)):
-        index = 1
-        file_path = new_pdf_location + '/2_' + screen_name +'_screened_' + note + "-" + str(index)
-        while os.path.isfile(file_path + '.csv'):
-            file_path = file_path.split("-")[0] + "-" + str(index)
-            index += 1
+       # index = 1
+        file_path = new_proj_location + '/Output/2_' + screen_name +'_screened_' + note + "-" + str(reviewer)
         print("Saving at " + file_path + '.csv')
-        try:
-            info_all[reviewer].to_csv(file_path + '.csv', encoding='utf-8', index=True)
-        except:
-            info_all[reviewer].to_csv(file_path + 'e.csv', encoding='utf-8', index=True)
+        info_all[reviewer].to_csv(file_path + '.csv', encoding='utf-8', index=True)

@@ -1,11 +1,4 @@
-PyMuPDF
-#numpy==1.19.5
-scikit-learn
-tensorflow>=2.0.0
-tensorflow-hub
+numpy
 openai==0.27.0
-gradio
 pandas
-habanero
 xlrd
-openpyxl

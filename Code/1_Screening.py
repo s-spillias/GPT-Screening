@@ -14,9 +14,9 @@ import string
 
 
 ## Set meta-parameters
-debug = True # Run fewer articles for debugging purposes
+debug = False # Run fewer articles for debugging purposes
 
-n_reviewers = 3 # Number of AI agents to independently ask
+n_reviewers = 2 # Number of AI agents to independently ask
 
 skip_criteria = True # Will skip remaining screening criteria if one fails across all AI agents
 
@@ -28,13 +28,15 @@ screen_name = 'pilot' # Name of spreadsheet with Abstract and Title *without ext
 
 note = '' # This will append a note to the output files
 
-openAI_key = "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" # Insert your OpenAI API key
+openAI_key = "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" # Insert your OpenAI API key
 
 model_to_use = "gpt-3.5-turbo-0301" # Currently only set-up for "gpt-3.5-turbo-0301"
 
 temperature = 0 # increasing this number will lead to less 'truthful' responses
 
 n_retries = 10 # Number of times to re-query OpenAI in event of disconnection
+
+save_frequency = 3 # How often to save intermediate results.
 
 exec(open(proj_location + '/set-up.py').read()) # Import Screening Criteria Text
 
@@ -55,7 +57,7 @@ decision_numeric = {'Yes': 2, 'No': 0, 'Maybe': 2} # How should each response be
 choices = responses.split(' or ') # used to ensure consistency in output format.
 
 # Import Functions
-exec(open('0_Functions.py').read())
+exec(open('Code/0_Functions.py').read())
 
 # Begin Screening
 
@@ -68,16 +70,13 @@ summary_decisions = info
 
 # Iteratively move through list of Title and Abstracts
 for i in range(0,len(info[f"Title"].values)): 
-    if i % 10 == 0: # Save intermediate results in case of disconnection or other failure.
+    if i % save_frequency == 0: # Save intermediate results in case of disconnection or other failure.
         print('Saving Intermediate Results...')
         summary_decisions_new = pd.concat([summary_decisions,info_all[0].filter(like=f'Deliberation - SC')], axis = 1)
-        if debug:
-                new_proj_location = proj_location + "/debug"
-        else:
-            new_proj_location = proj_location
-        file_path = new_proj_location + '/2a_' + screen_name +'_screen-summary'
+        new_proj_location = proj_location
+        file_path = new_proj_location + '/Output/2a_' + screen_name +'_screen-summary'
         try:
-            summary_decisions_new.to_csv(file_path + '.csv', encoding='utf-8', index=True)
+            save_results(screen_name)
         except:
             print("Couldn't Save...is file open?")
 # Print and build base prompt

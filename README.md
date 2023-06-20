@@ -9,14 +9,15 @@ Code for employing an LLM, *ChatGPT, to screen papers for a systematic review an
 ```
 pip install -r requirements.txt
 ```
-2. Create an excel file that includes, at least, Title information and Abstract information. The excel file can be called anything and can be specified in the main script 1_Screening.py '1-pilot.xls'
+2. Create an excel file that includes, at least, Title information and Abstract information. The excel file can be called anything and can be specified in the main script 1_Screening.py '1_pilot.xls'
 3. Web of Science* advanced search automatically produces a correctly fomatted excel file. Use this for now. *if using Scopus, you may need to change the title header to 'Title'
-4. Place this file in a subdirectory with your preferred project name. Current default is 'Test'. 
+4. Place this file in a subdirectory with your preferred project name. Current default is 'CBFM'. 
 
 ### Screening :
-1. Create / modify the screening criteria in 'set-up.py'
-2. Add your OpenAI key, if you have one. Otherwise, mine is included here while this repo is private.
-3. Select the OpenAI model, default is "gpt-3.5-turbo-0301", which is apparently cheap and optimized for chat.
+1. Create / modify the screening criteria in 'set-up.py', found in the project folder.
+2. Add your OpenAI key to 1_Screening.py
+3. Select the OpenAI model, default is "gpt-3.5-turbo-0301", other models have not been tested.
+4. There are a number of settings that can be set in the 1_Screening.py file. 
 4. Run the code. May take ~ 10 hours per 1000 articles. Cost for 3.5 Turbo will be ~ 10 USD.
 5. A new file, '2_Screening.csv', will be generated in the project subdirectory which will include the results of the screen, the specific responses to each screening criteria, and the LLM's justification.
 

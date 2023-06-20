@@ -28,7 +28,7 @@ screen_name = 'pilot' # Name of spreadsheet with Abstract and Title *without ext
 
 note = '' # This will append a note to the output files
 
-openAI_key = "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" # Insert your OpenAI API key
+openAI_key = "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" # Insert your OpenAI API key
 
 model_to_use = "gpt-3.5-turbo-0301" # Currently only set-up for "gpt-3.5-turbo-0301"
 

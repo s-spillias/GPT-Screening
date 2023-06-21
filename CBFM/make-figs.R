@@ -4,15 +4,15 @@ library(patchwork)
 library(beyonce)
 library(ggbeeswarm)
 
-df_fig <- list.files(path = ".", pattern = "FigureImport")
+df_fig <- list.files(path = "./Paper-Results", pattern = "FigureImport",
+                     full.names = TRUE)
 
 # for(df_file in df_fig){
 #   print(df_file)
   supp = ""
 
 df = df_fig %>% lapply(function(x) read.csv(x) %>%
-                    mutate(Prompt = ifelse(str_detect(x,"possible"),"Possible","Likely"),
-                           Colab = ifelse(str_detect(x,"Colab"),"Colab","Human"))) %>% 
+                    mutate(Colab = ifelse(str_detect(x,"Colab"),"Colab","Human"))) %>% 
   bind_rows() %>% 
   mutate(Committee = factor(ifelse(Committee,"Committee","Individual"), levels = c("Individual","Committee")),
          Reflection = factor(ifelse(Reflection,"Reflection","Initial"), levels = c("Initial","Reflection"))) 
@@ -26,8 +26,7 @@ pal = c("#a6611a",
 # Figure 2
 df %>% 
   group_by(Reflection,Committee) %>% 
-  filter(Prompt == "Possible",
-         Colab == "Colab",
+  filter(Colab == "Colab",
          Method == "AI-AnyYes",
          str_detect(Method,'AI')) %>% 
   # mutate(across(starts_with('n_'),min,.names =  "{.col}_min" )) %>% 
@@ -59,8 +58,7 @@ ggsave(paste0("Figures/Figure2",supp,".png"), device = 'png',height = 3,width = 
 # Figure 2 SUPP
 df %>% 
   group_by(Reflection,Committee) %>% 
-  filter(Prompt == "Possible",
-         Colab == "Colab",
+  filter(Colab == "Colab",
          str_detect(Method,'AI')) %>% 
   mutate(across(starts_with('n_'),min,.names =  "{.col}_min" )) %>% 
   mutate(across(starts_with('n_'),max,.names =  "{.col}_max" )) %>% 
@@ -123,7 +121,7 @@ geom_text_repel(data = df_colab %>% filter(str_detect(id,"Human|AnyYes")),
 
 df_colab %>% filter(str_detect(id,"AI")) %>% 
   ggplot() +
-  aes(x = "", 
+  aes(x = "AI", 
       y = Kappa) +
  # geom_boxplot(outlier.shape = NA) +
   geom_beeswarm(dodge.width=0.1,cex = 7, method = "swarm",#alpha = 0.1,  position = position_jitter(width = 0.2),
@@ -133,11 +131,11 @@ df_colab %>% filter(str_detect(id,"AI")) %>%
           #   size = 1
              ) +
   geom_point(data = df_colab %>% filter(str_detect(id,"Human")),
-             aes(x ="",
+             aes(x ="Human",
                  y = Kappa),
              shape = 8, size = 2) +
   geom_text_repel(data = df_colab %>% filter(str_detect(id,"Human")),
-                  aes(label = id, x = "", y = Kappa),box.padding = 0.5,min.segment.length = 0.01) +
+                  aes(label = id, x = "Human", y = Kappa),box.padding = 0.5,min.segment.length = 0.01) +
   # geom_text_repel(data = df_colab %>% filter(str_detect(id,"AnyYes")),
   #                 aes(label = id,x = "", y = Kappa),min.segment.length = 0.01) +
   xlab("") +
@@ -174,3 +172,7 @@ df_colab %>% filter(str_detect(id,"AI")) %>%
   
 ggsave(paste0("Figures/Figure3",supp,".png"), device = 'png', width = 8.5*.8, height = 4.84*.8)
 #}
+
+df_rand <- list.files(path = "./Paper-Results/rand_test", pattern = "collapsed",
+                     full.names = TRUE)  %>% 
+  lapply(function(x) read.csv(x)) 

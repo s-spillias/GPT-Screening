@@ -45,7 +45,7 @@ n_retries = 10 # Number of times to re-query OpenAI in event of disconnection
 
 save_frequency = 10 # How often to save intermediate results.
 
-for rand_seed in [False,True]: # Insert random string into prompts for uniqueness
+for rand_seed in [False]: # Insert random string into prompts for uniqueness
    print(rand_seed)
 
    note = 'rand-' + str(rand_seed) # This will append a note to the output files

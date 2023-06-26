@@ -14,7 +14,7 @@ def count_unique_values(pattern, directory):
     for file in file_list:
         with open(file, 'r') as csv_file:
             csv_reader = csv.reader(csv_file)
-            header = next(csv_reader)  # Assuming the first row contains the header
+            df = pd.DataFrame(csv_reader) # Assuming the first row contains the header
 
             # Update the maximum number of rows if necessary
             num_rows = sum(1 for row in csv_reader)
@@ -49,8 +49,8 @@ def count_unique_values(pattern, directory):
     return unique_counts
 
 # Specify the pattern and directory
-pattern = '*.csv'  # Replace with your desired pattern
-directory = '/path/to/directory'  # Replace with the directory path you want to search
+pattern = '*rand*'  # Replace with your desired pattern
+directory = './Paper-Results/rand_test'  # Replace with the directory path you want to search
 
 # Call the function to count unique values and save the output
 unique_counts = count_unique_values(pattern, directory)

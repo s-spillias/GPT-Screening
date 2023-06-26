@@ -23,7 +23,8 @@ pal = c("#a6611a",
   "#dfc27d",
   "#80cdc1",
   "#018571")
-# Figure 2
+
+### Figure 2
 df %>% 
   group_by(Reflection,Committee) %>% 
   filter(Colab == "Colab",
@@ -55,7 +56,7 @@ df %>%
 
 ggsave(paste0("Figures/Figure2",supp,".png"), device = 'png',height = 3,width = 3)
 
-# Figure 2 SUPP
+### Figure 2 SUPP
 df %>% 
   group_by(Reflection,Committee) %>% 
   filter(Colab == "Colab",
@@ -85,7 +86,7 @@ df %>%
 
 ggsave(paste0("Figures/Figure2_supp",supp,".png"), device = 'png',height = 7.59,width = 8.45)
 
-# Figure 3
+### Figure 3
 df_plot = df %>% 
   separate(Method,'id',sep = "_") %>% 
   mutate(tot = n_misses + n_extras+ n_finds+ n_omits) %>% 
@@ -144,35 +145,63 @@ df_colab %>% filter(str_detect(id,"AI")) %>%
   theme_classic() +
   theme(legend.position = "none") +
 
-# df_colab %>% filter(str_detect(id,"AI")) %>% 
-#   ggplot() +
-#   aes(x = Committee, 
-#       y = Kappa) +
-# #  geom_boxplot(outlier.shape = NA) +
-#   geom_beeswarm(dodge.width=1,#alpha = 0.1,  
-#     #position = position_jitter(width = 0.2),
-#              aes(             shape = Reflection, 
-#                               size = Committee)
-#              ) +
-#   scale_shape_manual(values = c(1,16)) +
-#   scale_color_manual(values = c("black","steelblue")) +
-#   theme_classic() +
-#   theme(legend.position = "none") +
-  
-# df_colab %>% 
-#   ggplot() +
-#   aes(x = Prompt, 
-#       y = Kappa) +
-#   geom_boxplot() +
-#   geom_point(alpha = 0.1,  position = position_jitter(width = 0.2)) +
-#   theme_classic() +
-  
   patchwork::plot_annotation(tag_levels = "a" ) +
   plot_layout(nrow = 2,design = 'aab', heights = c(.6,.4), guides = 'collect')
   
 ggsave(paste0("Figures/Figure3",supp,".png"), device = 'png', width = 8.5*.8, height = 4.84*.8)
 #}
 
-df_rand <- list.files(path = "./Paper-Results/rand_test", pattern = "collapsed",
+
+### Test effect of random string
+### Figure S1
+count_unique = function(str){
+  df_title = list.files(path = "./Paper-Results/rand_test", pattern = str,
                      full.names = TRUE)  %>% 
-  lapply(function(x) read.csv(x)) 
+  lapply(function(x) read.csv(x) %>% as_tibble() %>% 
+           dplyr::select(Title,contains("SC")))
+ 
+  df = lapply(df_title, function(x) x %>% dplyr::select(-Title))
+  
+  title = lapply(df_title, function(x) x %>% dplyr::select(Title))[[1]]
+df_count = tibble()
+for(i in 1:nrow(df[[1]])){
+  for(j in 1:ncol(df[[1]])){
+    text = vector()
+    for(k in 1:length(df)){
+      text = c(text,df[[k]][i,j] %>% as.character)
+    }
+    
+    df_count[i,j] = length(unique(text))
+  }
+}
+out = cbind(title,df_count)
+return(out)
+}
+
+counts_long = count_unique("False") %>% 
+  mutate(rand = "False") %>% 
+  bind_rows(
+    count_unique("True") %>% 
+      mutate(rand = "True")
+  ) %>% 
+#  setNames(c("Final","Reflection","Initial","Final","Reflection","Initial","Final","Reflection","Initial","RandomString")) %>% 
+  pivot_longer(starts_with("..."), names_to = 'names', values_to = "unique_count")
+
+counts = counts_long %>% 
+  pivot_wider(values_from = unique_count,names_from = rand)
+
+counts_long %>% 
+  ggplot() +
+  geom_boxplot(aes(x = rand,y = unique_count)) +
+  theme_classic() +
+  xlab("Variable Random String") +
+  ylab("Number of Unique Responses")
+
+ggsave(paste0("Figures/FigureS1",supp,".png"), device = 'png', width = 8.5*.8, height = 4.84*.8)
+
+# T-Test
+result = t.test(counts$False,  counts$True, paired = TRUE)
+print(result)
+
+## Figure S2
+

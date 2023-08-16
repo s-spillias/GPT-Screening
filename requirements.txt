@@ -3,3 +3,5 @@ openai==0.27.0
 pandas
 xlrd
 nltk
+python-dotenv==1.0.0
+openpyxl

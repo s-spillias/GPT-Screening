@@ -12,7 +12,8 @@ df_fig <- list.files(path = "./Paper-Results", pattern = "FigureImport",
   supp = ""
 
 df = df_fig %>% lapply(function(x) read.csv(x) %>%
-                    mutate(Colab = ifelse(str_detect(x,"Colab"),"Colab","Human"))) %>% 
+                    mutate(Colab = ifelse(str_detect(x,"Colab"),"Colab","Human"),
+                           Model = ifelse(str_detect(x,"GPT4"),"GPT-4","GPT-3.5"))) %>% 
   bind_rows() %>% 
   mutate(Committee = factor(ifelse(Committee,"Committee","Individual"), levels = c("Individual","Committee")),
          Reflection = factor(ifelse(Reflection,"Reflection","Initial"), levels = c("Initial","Reflection"))) 
@@ -98,6 +99,7 @@ ggplot(df_plot) +
   geom_point(data = df_colab %>% filter(str_detect(id,"AI")),
              aes(x = n_misses, 
              y = n_extras,
+             col = Model,
              shape = interaction(Reflection,Committee) ,
 
              #col = Prompt
@@ -126,7 +128,7 @@ df_colab %>% filter(str_detect(id,"AI")) %>%
       y = Kappa) +
  # geom_boxplot(outlier.shape = NA) +
   geom_beeswarm(dodge.width=0.1,cex = 7, method = "swarm",#alpha = 0.1,  position = position_jitter(width = 0.2),
-             aes(             shape = interaction(Reflection,Committee)
+             aes(shape = interaction(Reflection,Committee), col = Model
                              
                            ),
           #   size = 1
@@ -178,7 +180,7 @@ out = cbind(title,df_count)
 return(out)
 }
 
-counts_long = count_unique("False") %>% 
+counts_long = count_unique("gpt") %>% 
   mutate(rand = "False") %>% 
   bind_rows(
     count_unique("True") %>% 

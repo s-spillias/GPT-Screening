@@ -35,7 +35,7 @@ code_out = os.environ.get("EXTRACTION_OUTPUT_FILE")
 embedding_model = os.environ.get("EMBEDDING_MODEL")
 topic = os.environ.get("TOPIC")
 chunk_size = int(os.environ.get("CHUNK_SIZE"))
-n_chunks = int(os.environ.get("N_CHUNKS"))
+
 
 
 question_parms = pd.read_csv(proj_location + '/ExtractionQuestions.csv', index_col=False)
@@ -111,7 +111,7 @@ for identity in identities:
         question = all_questions[q_num]
         type = text_source[q_num]
         #print(type)
-       # n_chunks = data_format[prompt_type[q_num]][0]
+        n_chunks = int(os.environ.get("N_CHUNKS"))
         print(">>>>>>>>")
         print(question)
         print(">>>>>>>>")

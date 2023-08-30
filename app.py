@@ -1,4 +1,7 @@
 recommender = None
+import os
+import openpyxl
+import pandas as pd
 
 # Read PDF
 
@@ -124,7 +127,7 @@ class SemanticSearch:
         self.model = AutoModel.from_pretrained(embedding_model)
         self.fitted = False
     
-    def fit(self, data, batch=1000, n_neighbors=n_chunks):
+    def fit(self, data, batch=1000, n_neighbors=5):
         self.data = data
         self.embeddings = self.get_text_embedding(data, batch=batch)
         n_neighbors = min(n_neighbors, len(self.embeddings))
@@ -254,24 +257,25 @@ def respond(question,type):
                 n_attempts += 1
     return response, r_split[0], r_split[1]
 
-def save_sheet(identity,df):
+def save_sheet(identity,df,out_path):
 
   ### Save Data
   # Define the file path
-  file_name = pdf_location + '/' + code_out + '.xlsx'
+  file_name = out_path + '.xlsx'
+  print("Saving to " + file_name)
   if not os.path.exists(file_name):
-      print("file doesn't exist")
       workbook = openpyxl.Workbook()
       workbook.save(file_name)
       # Open the Excel file using Pandas ExcelWriter
       excel_writer = pd.ExcelWriter(file_name, engine='openpyxl')
 
       # Write the DataFrame to a new sheet
-      df.to_excel(excel_writer, sheet_name=identity, index=False)
+      sheet_name = identity + '-' + str(1)
+      df.to_excel(excel_writer, sheet_name=sheet_name, index=False)
       # Save the changes to the Excel file
       excel_writer._save()
+      print("\n" + f"Saving Outputs to Sheet {sheet_name}" + "\n")
   else:
-      print("file exists")
       # If the file exists, open it using openpyxl and add the DataFrame to a new sheet
       workbook = openpyxl.load_workbook(filename=file_name)
       sheet_name = identity

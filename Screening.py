@@ -16,25 +16,25 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-openAI_key = os.environ.get("OPENAI_KEY")
-model_to_use = os.environ.get("MODEL_TO_USE")
+proj_location = os.environ.get("PROJ_LOCATION")
+debug = os.environ.get("DEBUG")
+openAI_key = os.environ.get("OPENAI_API_KEY")
+model_to_use = os.environ.get("SCREENING_MODEL_TO_USE")
 n_retries = int(os.environ.get("N_RETRIES"))
+n_agents = int(os.environ.get("N_AGENTS"))
 temperature = int(os.environ.get("TEMPERATURE"))
 save_note = os.environ.get("SAVE_NOTE")
 rand_seed = os.environ.get("RAND_SEED")
 topic = os.environ.get("TOPIC")
-Screening_Criteria=os.environ.get("SCREENING_CRITERIA")
 skip_criteria = os.environ.get("SKIP_CRITERIA")
 screen_name = os.environ.get("SCREEN_NAME")
-proj_location = os.environ.get("PROJ_LOCATION")
-debug = os.environ.get("DEBUG")
 
-ScreeningCriteria = Screening_Criteria.split(";")
+ScreeningCriteria = [s.strip() for s in os.environ.get("SCREENING_CRITERIA").split(";")]
 
 responses = 'Yes or No or Maybe' # included in prompt; what should the decisions be?
 choices = responses.split(' or ') # used to ensure consistency in output format.
 
-def generate_text(openAI_key, prompt, n_reviewers, model_to_use):
+def generate_text(openAI_key, prompt, n_agents, model_to_use):
     openai.api_key = openAI_key
     messages = [{'role': 'system', 'content': 'You are a helpful assistant.'},
                 {'role': 'user', 'content': prompt}]
@@ -49,7 +49,7 @@ def generate_text(openAI_key, prompt, n_reviewers, model_to_use):
                     messages=messages,
                     max_tokens=512,
                 # logprobs = logprobs,
-                    n=n_reviewers,
+                    n=n_agents,
                     stop=None,
                     temperature=temperature)
                 failed = False
@@ -199,7 +199,6 @@ def main():
     info = info[0:n_studies] # For Debugging
     print('\nAssessing ' + str(len(info)) + ' Papers')
     info[f"Accept"] = "NA"    
-    n_agents = int(os.environ.get("N_AGENTS"))
     info_all = [info.copy() for _ in range(n_agents)]
     summary_decisions = info
 

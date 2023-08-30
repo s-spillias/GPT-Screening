@@ -1,0 +1,9 @@
+﻿Question,Response Format,Text Source
+Where is the study located?,Categorical,main
+"What type of Tipping Point is discussed in the study? Choices: Biophysical, Social, Socio-Ecological",Multiple-Choice,main
+"Over what temporal scale are the drivers of the tipping point occurring? Choices: Millenia, Centuries, Decades,Years",Multiple-Choice,main
+"Over what geographical scale are the drivers of the tipping point occurring? Choices: Global, Regional, Local",Multiple-Choice,main
+"Over what temporal scale are the feedbacks of the tipping point occurring? Choices: Millenia, Centuries, Decades,Years",Multiple-Choice,main
+"Over what geographical scale are the feedbacks of the tipping point occurring? Choices: Global, Regional, Local",Multiple-Choice,main
+Which framework is used to understand the tipping point?,Categorical,main
+Which are the three most similar studies to the Topic in the reference list?,Qualitative,backmatter

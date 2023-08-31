@@ -68,7 +68,7 @@ data_format = {'Quantitative': (3,'Return either a single value with any associa
 # Base Prompt for all queries. Screening Criteria information is included in 'Code/auxPDFs.py'
 base_prompt = "Compose your answer strictly in two parts, 'Data' and 'Context', according to the format between **** below. Separate 'Data' and 'Context' using this symbol %% and ensure that the words 'Data' and 'Context' are present."\
               "\n****\n\nData: Answer to the query according to the Data Format.\n\n%%\n\n"\
-              "Context: 'specific quotation from the study to support the Data above. Include the page number of the quotation in square brackets []'\n\n****\n"\
+              "Context: 'specific quotation from the study to support the Data above.\n\n"\
               "For each point in your Data, provide a specific quotation from the study for context."\
               "Only include information in the Data based on the study and don't include additional information. "\
               "Make sure the Data is correct and don't output false content. "\

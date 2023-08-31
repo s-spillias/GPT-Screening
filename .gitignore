@@ -5,6 +5,8 @@ __pycache__/
 
 corpus.pdf_1.npy
 corpus.pdf
+TippingPoints/
+UnintendedConsequences/
 
 # C extensions
 *.so

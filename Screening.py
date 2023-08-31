@@ -13,7 +13,7 @@ import random
 import openai
 import string
 from dotenv import load_dotenv
-from app import save_sheet
+from auxiliary import save_sheet
 import openpyxl
 
 load_dotenv()

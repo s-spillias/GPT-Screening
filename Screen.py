@@ -10,16 +10,15 @@ import re
 import numpy as np
 import time
 import random
-import openai
+
 import string
 from dotenv import load_dotenv
-from auxiliary import save_sheet
+from auxiliary import save_row,generate_text
 import openpyxl
 
 load_dotenv()
 
 proj_location = os.environ.get("PROJ_LOCATION")
-debug = os.environ.get("DEBUG")
 openAI_key = os.environ.get("OPENAI_API_KEY")
 model_to_use = os.environ.get("SCREENING_MODEL_TO_USE")
 n_retries = int(os.environ.get("N_RETRIES"))
@@ -31,40 +30,25 @@ topic = os.environ.get("TOPIC")
 skip_criteria = os.environ.get("SKIP_CRITERIA")
 screen_name = os.environ.get("SCREEN_NAME")
 
+out_path = proj_location + "/Output/" + screen_name + "-" + save_note
+
 ScreeningCriteria = [s.strip() for s in os.environ.get("SCREENING_CRITERIA").split(";")]
+
+ScreeningCriteria_new = []
+for criterion in ScreeningCriteria:
+    criteria = [criterion]
+    for agent in range(n_agents-1):
+        prompt = f"Re-word the following Screening Criteria: '{criterion}'"
+        criterion = generate_text(os.environ.get("OPENAI_API_KEY"), prompt, 1, model_to_use).choices[0].message['content']
+        criteria.append(criterion)
+    ScreeningCriteria_new.append(criteria)
 
 responses = 'Yes or No or Maybe' # included in prompt; what should the decisions be?
 choices = responses.split(' or ') # used to ensure consistency in output format.
 
-def generate_text(openAI_key, prompt, n_agents, model_to_use):
-    openai.api_key = openAI_key
-    messages = [{'role': 'system', 'content': 'You are a helpful assistant.'},
-                {'role': 'user', 'content': prompt}]
-    failed = True
-    attempt = 0
-    while failed:
-        attempt += 1
-        if attempt < n_retries:
-            try:
-                completions = openai.ChatCompletion.create(
-                    model=model_to_use,
-                    messages=messages,
-                    max_tokens=512,
-                # logprobs = logprobs,
-                    n=n_agents,
-                    stop=None,
-                    temperature=temperature)
-                failed = False
-            except:
-                print('Connection Error - Retrying')
-                time.sleep(1*2^attempt)     
-        else:    
-            continue
-   # message = completions.choices.message['content']
-    return completions
 
-def get_data(prompt,content,n_agents,SC_num,info_all,paper_num):
-    prompt = prompt + "\n\n" + content + '\n\n'
+def get_data(Criteria,content,n_agents,SC_num,info_all,paper_num):
+    
     #print(prompt)
     ## Call OpenAI
     assessments = []
@@ -73,7 +57,12 @@ def get_data(prompt,content,n_agents,SC_num,info_all,paper_num):
     decisions = []
     conflicts = []
     rand_string = ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(10))
+    decided = False
     for r in range(0,n_agents):
+        if decided:
+            continue
+        Criterion = Criteria[r]
+        prompt = add_criteria(Criterion) + "\n\n" + content + '\n\n'
         bad_answer = True
         while bad_answer: # Force a correctly formatted response.
             # Add in random string for uniqueness
@@ -81,7 +70,7 @@ def get_data(prompt,content,n_agents,SC_num,info_all,paper_num):
                 rand_string = ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(10))
             else:
                 rand_string = rand_string
-            print(rand_string)
+           # print(rand_string)
             new_prompt = f"Ignore this string: {rand_string}" + "\n\n" + prompt
             #print(new_prompt)
             # Call OpenAI
@@ -110,11 +99,13 @@ def get_data(prompt,content,n_agents,SC_num,info_all,paper_num):
                     thoughts = ""
                 if not(any(choice in decision for choice in choices)):
                     continue
-                print(ScreeningCriteria[int(SC_num)-1])
-                col_decision = "Accept - SC" + f"{SC_num}: " + ScreeningCriteria[int(SC_num)-1]
-                col_rationale = "Rationale - SC" + f"{SC_num}: " + ScreeningCriteria[int(SC_num)-1]
-                col_thoughts = "Thoughts - SC" + f"{SC_num}: " + ScreeningCriteria[int(SC_num)-1]
+                #print(Criterion)
+                col_decision = "Accept - SC" + f"{SC_num}: " + Criterion
+                col_rationale = "Rationale - SC" + f"{SC_num}: " + Criterion
+                col_thoughts = "Thoughts - SC" + f"{SC_num}: " + Criterion
                 bad_answer = False  
+                if not "No" in thoughts[:6] and not "No" in decision:
+                    decided = True
             except:
                 print("Bad Parsing...Trying again...")
         # Store outputs
@@ -129,18 +120,17 @@ def get_data(prompt,content,n_agents,SC_num,info_all,paper_num):
         conflicted = (initial_decision != final_decision)
         conflicts.append(conflicted)
        # print(conflicted)
-        initial_decisions.append(final_decision)
-        final_decisions.append(initial_decision)
+        initial_decisions.append(initial_decision)
+        final_decisions.append(final_decision)
     return assessments, initial_decisions, final_decisions, conflicts
 
 # Create Prompt to LLM
-def add_criteria(Criteria):
-    base_prompt = "You are a reviewer for a research project and have been asked to assess whether the "\
-             "given paper Title and Abstract meets the following Screening Criteria (SC)."\
-                 " In assessing, do not re-interpret the SC, simply assess the SC at face value.\n"\
-             "We are only interested in papers that strictly meet the SC.\n"\
-             "If not enough information is available, be inclusive as we can follow-up at a later stage."
-    base_prompt += '\n\n' + f'SC: ' + Criteria 
+def add_criteria(Criterion):
+    base_prompt = """You are a reviewer for a research project and have been asked to assess whether the given paper Title and Abstract meets the following Screening Criteria (SC)."\
+                 In assessing, do not re-interpret the SC, simply assess the SC at face value.\n
+             We are only interested in papers that strictly meet the SC.\n
+             If not enough information is available, be inclusive as we can follow-up at a later stage."""
+    base_prompt += '\n\n' + f'SC: ' + Criterion
     base_prompt += '\n\n' + f"Task: Given the following Title and Abstract, respond"\
             f" to the Screening Criteria (SC) with the following elements, "\
             "Initial Response, Reflection on Initial Response, and Final Response."\
@@ -162,60 +152,79 @@ excel_sheet = '1_' + screen_name + '.xls'
 
 papers = pd.read_excel(proj_location + '/' +  'Input' + '/' + excel_sheet).replace(np.nan, '') 
 
-if debug: 
-    n_studies = int(os.environ.get("DEBUG_N"))
-else:
-    n_studies = len(papers)
-
 decision_numeric = {'Yes': 2, 'No': 0, 'Maybe': 2} # How should each response be 'counted' when assessing inclusion.
 
-    # Begin Screening
+# Create Header for Spreadsheets
+
+headers = []
+
+for agents in range(n_agents):
+    SC_num = 1
+    header = ['Paper Number','Title','Abstract'] 
+    for SC in ScreeningCriteria:
+        Criteria = ScreeningCriteria_new[SC_num-1]
+        Criterion = Criteria[agents]
+        col_decision = "Accept - SC" + f"{SC_num}: " + Criterion
+        col_rationale = "Rationale - SC" + f"{SC_num}: " + Criterion
+        col_thoughts = "Thoughts - SC" + f"{SC_num}: " + Criterion
+        header = header + [col_decision] + [col_rationale] + [col_thoughts]
+        SC_num +=1
+    headers.append(header)
+    
+
+# Prepare Spreadsheets
+for agent in range(n_agents):
+    save_row(screen_name + str(agent),headers[agent], out_path)
+save_row(screen_name + "_summary",["Paper Number","Title","Abstract","Accept"],out_path)
+
+
+# Begin Screening
 
 info = papers[['Title','Abstract']]
-info = info[0:n_studies] # For Debugging
+
 print('\nAssessing ' + str(len(info)) + ' Papers')
-#info[f"Accept"] = "NA"    
-info_all = [info.copy() for _ in range(n_agents)]
-summary_decisions = info
+   
+info_all = [pd.DataFrame() for _ in range(n_agents)]
+
 
 
 # Iteratively move through list of Title and Abstracts
 restart_index = int(os.environ.get("RESTART_INDEX"))
 for paper_num in range(restart_index,len(info[f"Title"].values)): 
-    if paper_num % 10 == 0: # Save intermediate results in case of disconnection or other failure.
-        print('Saving Intermediate Results...')
-        summary_decisions_new = pd.concat([summary_decisions,info_all[0].filter(like=f'Deliberation - SC')], axis = 1)
-        if debug:
-                new_proj_location = proj_location + "/debug"
-        else:
-            new_proj_location = proj_location
-        file_path = new_proj_location + '/2a_' + screen_name +'_screen-summary'
-        try:
-            summary_decisions_new.to_csv(file_path + '.csv', encoding='utf-8', index=True)
-        except:
-            print("Couldn't Save...is file open?")
-# Print and build base prompt
+    summary_decision = "NA"
+    try:
+        max_paper = int(os.environ.get("N_PAPERS"))
+        if paper_num >= int(os.environ.get("N_PAPERS")):
+            break
+    except:
+        print("Extracting All")
+    # Print and build base prompt
     print('\nPaper Number: ' + str(paper_num))
     title = info[f"Title"].values[paper_num]
     abstract = info[f"Abstract"].values[paper_num]
-    if "No Abstract" in abstract:
+    for agent in range(n_agents):
+        info_all[agent].at[paper_num,"Paper Number"] = paper_num
+        info_all[agent].at[paper_num,"Title"] = title
+        info_all[agent].at[paper_num,"Abstract"] = abstract
+    if abstract == "No Abstract" or abstract == '':
         print(abstract)
         print("Skipping to next paper...")
-        summary_decisions.at[paper_num,'Accept'] = 'Maybe'
+        summary_decision = 'Maybe'
         continue
     content = "Title: " + title + "\n\nAbstract: " + abstract
     print("\n>>>>>>>>>>>>>>>>>>>>>>>>>>")
     print(content)
     SC_num = 1
 # Iterate over screening criteria 
-    for Criteria in ScreeningCriteria:
-        prompt = add_criteria(Criteria)
+    for Criteria in ScreeningCriteria_new:
+      #  print(Criteria)
+       # prompt = add_criteria()
         #print(prompt)
-######################
-######################
-        assessments,initial_decisions,final_decisions,conflicts = get_data(prompt,content,n_agents,SC_num,info_all,paper_num) #  Call OpenAI here  #
-######################
-######################
+        ######################
+        ######################
+        assessments,initial_decisions,final_decisions,conflicts = get_data(Criteria,content,n_agents,SC_num,info_all,paper_num) #  Call OpenAI here  #
+        ######################
+        ######################
         print("\nInitial Decisions: ")
         print(initial_decisions)
         print("\nFinal Decisions: ")
@@ -224,36 +233,38 @@ for paper_num in range(restart_index,len(info[f"Title"].values)):
         print(conflicts)
         converted_decisions = [decision_numeric.get(element, element) for element in (initial_decisions + final_decisions)] 
         converted_decisions = [element for element in converted_decisions if not isinstance(element, str)]
-# Skip subsequent screening criteria in event of a full rejection across all AI agents.
+        # Skip subsequent screening criteria in event of a full rejection across all AI agents.
         if sum(converted_decisions) == 0:
             print("Rejected at SC: " + str(SC_num))
-            summary_decisions.at[paper_num,'Accept'] = 'No'
+            summary_decision = 'No'
             if skip_criteria and not any(conflicts):
                 break
 
         SC_num += 1
-# If the paper hasn't been rejected by now, accept it.
-    if summary_decisions.loc[paper_num,'Accept'] != "No":
-        summary_decisions.at[paper_num,'Accept'] = 'Yes'
+    # If the paper hasn't been rejected by now, accept it.
+    if summary_decision != "No":
+        summary_decision = 'Yes'
+    #summary_decisions_new = pd.concat([summary_decisions,info_all[0].filter(like=f'Deliberation - SC')], axis = 1)
+    new_proj_location = proj_location
+    file_path = new_proj_location + '/2a_' + screen_name +'_screen-summary'
+    # try:
+    #     summary_decisions_new.to_csv(file_path + '.csv', encoding='utf-8', index=True)
+    # except:
+    #     print("Couldn't Save...is file open?")
+    for agent in range(n_agents):
+        df = info_all[agent]
+        print(agent)
+        save_row(screen_name + str(agent),df.values[-1].tolist(),out_path)
+    # Save Summary
+    summary_row = [paper_num,title,abstract,summary_decision]
+    save_row(screen_name + "_summary",summary_row,out_path)
+
 # End Iterating over articles. 
 
-summary_decisions_new = summary_decisions
 
 
-# Save results
-
-for df in info_all:
-    out_path = proj_location + "/Output/" + screen_name + "-" + save_note
-    save_sheet(screen_name,df,out_path)
 
 
-# Save Summary
-workbook = openpyxl.load_workbook(filename=out_path + ".xlsx")
-print("\n" + f"Saving Summary" + "\n")
-excel_writer = pd.ExcelWriter(out_path + ".xlsx", engine='openpyxl', mode='a')
-summary_decisions_new.to_excel(excel_writer, sheet_name="summary", index=False)
-excel_writer._save()
-excel_writer.close()
 
 
 

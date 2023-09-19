@@ -13,7 +13,122 @@ from langchain.chains.summarize import load_summarize_chain
 from langchain.chat_models import ChatOpenAI
 from langchain.utilities import ArxivAPIWrapper
 import os
+import re
 
+from collections import Counter
+
+
+
+
+def remove_headers(text):
+
+    line_frequencies = count_line_frequencies(text)
+    
+    headers_to_remove = [line for line, count in line_frequencies.items() if count >= 4]
+
+    filtered_headers_to_remove = [header for header in headers_to_remove if header and not header.isnumeric() and len(header.split()) > 1]
+
+    lines = text.split('\n')
+
+    cleaned_lines = [line for line in lines if all(keyword.lower() not in line.lower() for keyword in filtered_headers_to_remove)]
+
+    return '\n'.join(cleaned_lines)
+
+
+
+def count_line_frequencies(documents):
+
+    line_counter = Counter()
+
+    for text in documents:
+
+        lines = text.page_content.split('\n')
+
+        line_counter.update(lines)
+
+    return line_counter
+
+
+
+def preprocess(text):
+    text = text.replace('\n', ' ')
+    text = re.sub('\s+', ' ', text)
+   # text = text.lower()
+    return text
+
+def split_at_references(text):
+    # Search for various terms
+    matches = list(re.finditer(r'(?<=\n)(References|Bibliography|Work Cited|Works Cited|Source List|Literature Cited|Citation List)', text, re.IGNORECASE))
+    
+    # If found, use the last occurrence for splitting
+    if matches:
+        last_match = matches[-1]
+        before_references = text[:last_match.start()]
+        references = text[last_match.start():]
+        return before_references, references
+    else:
+        return [text]
+    
+def split_at_references_old(text):
+    target_word_pattern = r'a\s*c\s*k\s*n\s*o\s*w\s*l\s*e\s*d\s*g\s*(e\s*m\s*e\s*n\s*t\s|m\s*e\s*n\s*t\s*)'
+    match = re.search(target_word_pattern, text, re.I)
+
+    if match:
+        index = match.start()
+        part1 = text[:index]
+        part2 = text[index:]
+
+        parts = [part1,part2]
+    else:
+        # Handle case where the target words are not found
+        parts = [text]
+    return parts
+
+def separate_text(documents):
+    line_frequencies = count_line_frequencies(documents)
+
+    headers_to_remove = [line for line, count in line_frequencies.items() if count >= 4]
+
+    filtered_headers_to_remove = [header for header in headers_to_remove if header and not header.isnumeric() and len(header.split()) > 1]
+
+    #cleaned_text_by_page = [remove_headers(text, filtered_headers_to_remove) for text in text_chunks]
+
+
+
+    # text_list = copy.copy(text_chunks)
+    in_frontmatter = True
+    in_backmatter = False
+
+    for doc in documents:
+       # print(text)
+        new_text = preprocess(remove_headers(doc.page_content, filtered_headers_to_remove))
+       # new_text = preprocess(doc.page_content)
+        if in_backmatter:
+            doc.page_content = new_text
+            doc.metadata['type'] = 'backmatter'
+            continue
+        if in_frontmatter:
+            abstract_position = new_text.lower().find('abstract')
+            if abstract_position != -1:
+                split_at_abstract = [new_text[:abstract_position], new_text[abstract_position + len('abstract'):]]
+            else:
+                split_at_abstract = [new_text]
+           #split_at_abstract = new_text.lower().split('abstract')
+            if (len(split_at_abstract)>1):
+                in_frontmatter = False
+                new_text = split_at_abstract[1]
+                #text_list.append(Document(page_content= split_at_abstract[0], type= 'frontmatter'))
+                doc.page_content = split_at_abstract[0]
+                doc.metadata['type'] = 'frontmatter'
+
+        split_at_reference = split_at_references(new_text)
+        if (len(split_at_reference)>1):
+            in_backmatter = True
+            new_text = split_at_reference[0]
+       # text_list.append(Document(page_content= text, type= 'main'))
+        doc.page_content = new_text
+        doc.metadata['type'] = 'main'
+    return documents
 
 class Embedder:
     """Embedding engine to create doc embeddings."""
@@ -56,7 +171,13 @@ class Embedder:
 
         # Process PDF
         text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
-        self.documents = text_splitter.split_documents(documents)
+        clean_docs = text_splitter.split_documents(documents)
+        text_chunks = separate_text(clean_docs)
+        self.documents = [doc for doc in text_chunks if doc.metadata['type'] == 'main']
+       # print(self.documents)
+        unreadable = self.documents[0]==self.documents[1]
+        if unreadable:
+            raise ValueError(f'PDF is not Machine-Readable: {path}')
 
 
 

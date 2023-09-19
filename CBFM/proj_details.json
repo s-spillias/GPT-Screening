@@ -1,0 +1,7 @@
+{"TOPIC": "Benefits and Barriers to Community-Based Fisheries Management in the Pacific", 
+"SCREENING_CRITERIA": [
+"Is it likely that the Title and Abstract summarise a paper with a case study from: Cook Islands, Federated States of Micronesia, Fiji, Kiribati, Marshall Islands, Nauru, Niue, Palau, Papua New Guinea, Samoa, Solomon Islands, Tonga, Tuvalu, Vanuatu",
+"Is it likely that the Title and Abstract summarise a paper that will discuss fisheries and/or marine resource management?", 
+"Is it likely that the Title and Abstract summarise a paper that will discuss a community-based approach?"], 
+"PROMPT": "You are a reviewer for a research project and have been asked to assess whether the given paper Title and Abstract are related to the following Screening Criteria:",
+"SCREENING_MODEL_TO_USE":"ft:gpt-3.5-turbo-0613:csiro:cbfm-screen:7ywgsO1G"}

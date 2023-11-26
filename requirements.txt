@@ -1,23 +1,7 @@
 numpy
-
+openai==0.27.0
 pandas
 xlrd
 nltk
 python-dotenv==1.0.0
 openpyxl
-
-langchain==0.0.184
-PyPDF2==3.0.1
-python-dotenv==1.0.0
-openai==0.27.6
-faiss-cpu==1.7.4
-altair==4
-tiktoken==0.4.0
-tensorflow-hub
-tensorflow>=2.0.0
-# uncomment to use huggingface llms
- huggingface-hub==0.14.1
-
-# uncomment to use instructor embeddings
- InstructorEmbedding==1.0.1
- sentence-transformers==2.2.2

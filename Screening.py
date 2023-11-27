@@ -134,12 +134,12 @@ def get_data(Criterion,content,n_agents,SC_num,info_all,paper_num):
                 print("Bad Parsing...Trying again...")
         # Store outputs
         info_all[agent].loc[paper_num, ['Paper Number',"Title", "Abstract"]] = [paper_num, title, abstract]
-        info_all[agent].loc[paper_num, col_decision] = final_decision
-        info_all[agent].loc[paper_num, col_initial] = initial_decision
-        info_all[agent].loc[paper_num, col_thoughts] = thoughts
+        if not bad_answer:
+            info_all[agent].loc[paper_num, col_decision] = final_decision
+            info_all[agent].loc[paper_num, col_initial] = initial_decision
+            info_all[agent].loc[paper_num, col_thoughts] = thoughts
         conflicted = (initial_decision != final_decision)
         conflicts.append(conflicted)
-       # print(conflicted)
         initial_decisions.append(initial_decision)
         final_decisions.append(final_decision)
     return assessments, initial_decisions, final_decisions, conflicts

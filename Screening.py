@@ -255,7 +255,7 @@ for screen_name in scenarios:
     print('\nAssessing ' + str(len(info)) + ' Papers')
     #info[f"Accept"] = "NA"    
 
-    info_all = [info for _ in range(n_agents)]
+    info_all = [info.copy() for _ in range(n_agents)]
     summary_decisions = info
 
     summary_row = ["Paper Number","Title","Abstract","Summary Decision"]

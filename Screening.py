@@ -167,29 +167,29 @@ def add_criteria(Criteria):
             "\nSC: Final Response; One sentence of reasoning."
     return base_prompt
 
-def save_results(screen_name,info_all):
-    if debug:
-        new_proj_location = proj_location + "/debug"
-    else:
-        new_proj_location = proj_location + '/Output'
-    if not os.path.exists(new_proj_location):
-        os.makedirs(new_proj_location)
-    file_path = new_proj_location + '/2a_' + screen_name +'_screen-summary'
-    try:
-        summary_decisions_new.to_csv(file_path + '.csv', encoding='utf-8', index=True)
-    except:
-        print("Couldn't Save...is file open?")
-    for reviewer in range(len(info_all)):
-        index = 1
-        file_path = new_proj_location + '/2_' + screen_name +'_screened_' + save_note + "-" + str(index)
-        while os.path.isfile(file_path + '.csv'):
-            file_path = file_path.split("-")[0] + "-" + str(index)
-            index += 1
-        print("Saving at " + file_path + '.csv')
-        try:
-            info_all[reviewer].to_csv(file_path + '.csv', encoding='utf-8', index=True)
-        except:
-            info_all[reviewer].to_csv(file_path + 'e.csv', encoding='utf-8', index=True)
+# def save_results(screen_name,info_all):
+#     if debug:
+#         new_proj_location = proj_location + "/debug"
+#     else:
+#         new_proj_location = proj_location + '/Output'
+#     if not os.path.exists(new_proj_location):
+#         os.makedirs(new_proj_location)
+#     file_path = new_proj_location + '/2a_' + screen_name +'_screen-summary'
+#     try:
+#         summary_decisions_new.to_csv(file_path + '.csv', encoding='utf-8', index=True)
+#     except:
+#         print("Couldn't Save...is file open?")
+#     for reviewer in range(len(info_all)):
+#         index = 1
+#         file_path = new_proj_location + '/2_' + screen_name +'_screened_' + save_note + "-" + str(index)
+#         while os.path.isfile(file_path + '.csv'):
+#             file_path = file_path.split("-")[0] + "-" + str(index)
+#             index += 1
+#         print("Saving at " + file_path + '.csv')
+#         try:
+#             info_all[reviewer].to_csv(file_path + '.csv', encoding='utf-8', index=True)
+#         except:
+#             info_all[reviewer].to_csv(file_path + 'e.csv', encoding='utf-8', index=True)
 
 
 
@@ -335,9 +335,10 @@ for screen_name in scenarios:
         # Save results
 
         i=0
-        for data in info_all: 
+        for agent in range(len(info_all)): 
+            print(agent)
             try:
-                save_info = data.iloc[paper_num,:].tolist()
+                save_info = info_all[agent].iloc[paper_num,:].tolist()
                 #save_info = [x for x in save_info if x == x]
                 #print(save_info)
                 save_row(screen_name + str(i),save_info,out_path)

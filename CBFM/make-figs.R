@@ -27,6 +27,9 @@ pal = c("#a6611a",
 # Replace with your model ID
 model_id <- "Your Model ID"
 
+# Print column names
+print(colnames(df))
+
 ### Figure 2
 df %>% 
   filter(Model == model_id) %>% 

@@ -24,8 +24,12 @@ pal = c("#a6611a",
   "#80cdc1",
   "#018571")
 
+# Replace with your model ID
+model_id <- "Your Model ID"
+
 ### Figure 2
 df %>% 
+  filter(Model == model_id) %>% 
   group_by(Reflection,Committee) %>% 
   filter(Colab == "Colab",
          Method == "AI-AnyYes"#,

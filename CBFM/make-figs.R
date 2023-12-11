@@ -3,20 +3,19 @@ library(ggrepel)
 library(patchwork)
 library(beyonce)
 library(ggbeeswarm)
+library(readxl)
 
-df_fig <- list.files(path = "./Paper-Results", pattern = "FigureImport",
-                     full.names = TRUE)
+file <- "Comparison_Results.xlsx"
 
-# for(df_file in df_fig){
-#   print(df_file)
+
   supp = ""
 
-df = df_fig %>% lapply(function(x) read.csv(x) %>%
-                    mutate(Colab = ifelse(str_detect(x,"Colab"),"Colab","Human"),
-                           Model = ifelse(str_detect(x,"GPT4"),"GPT-4","GPT-3.5"))) %>% 
+df = c("Human-Compare","Colab-Compare") %>% lapply(function(x) read_excel(file, sheet = x) %>%
+                    mutate(Colab = ifelse(str_detect(x,"Colab"),"Colab","Human"))) %>% 
   bind_rows() %>% 
-  mutate(Committee = factor(ifelse(Committee,"Committee","Individual"), levels = c("Individual","Committee")),
-         Reflection = factor(ifelse(Reflection,"Reflection","Initial"), levels = c("Initial","Reflection"))) 
+  rename("Model" = "...1") %>% 
+  mutate(Committee = factor(ifelse(!str_detect(Model,"AI"),"Committee","Individual"), levels = c("Individual","Committee")),
+         Reflection = factor(ifelse(str_detect(Model,"Reflection"),"Reflection","Initial"), levels = c("Initial","Reflection"))) 
 
 #n_paper = df %>% mutate(tot = n_misses + n_extras+ n_finds+ n_omits) %>% pull(tot) %>% 
 
@@ -29,18 +28,13 @@ pal = c("#a6611a",
 df %>% 
   group_by(Reflection,Committee) %>% 
   filter(Colab == "Colab",
-         Method == "AI-AnyYes",
-         str_detect(Method,'AI')) %>% 
-  # mutate(across(starts_with('n_'),min,.names =  "{.col}_min" )) %>% 
-  # mutate(across(starts_with('n_'),max,.names =  "{.col}_max" )) %>% 
-  # reframe(n_misses_range = paste0(n_misses_min,' - ',n_misses_max),
-  #         n_omits_range = paste0(n_omits_min,' - ',n_omits_max),
-  #         n_extras_range = paste0(n_extras_min, ' - ',n_extras_max),
-  #         n_finds_range = paste0(n_finds_min,' - ',n_finds_max)) %>% 
+         Method == "AI-AnyYes"#,
+         #str_detect(Method,'AI')
+         ) %>% 
   distinct() %>% 
   pivot_longer(starts_with('n_'), values_to = 'value',names_to = 'type') %>% 
-  mutate(human = factor(ifelse(str_detect(type,"misses|finds"),"Accept","Reject"),levels = c("Accept","Reject")),
-         ai = factor(ifelse(str_detect(type,"extras|finds"),"Accept","Reject"),levels = c("Accept","Reject") %>% rev)) %>% 
+  mutate(human = factor(ifelse(str_detect(type,"True Positive|False Negative"),"Accept","Reject"),levels = c("Accept","Reject")),
+         ai = factor(ifelse(str_detect(type,"False Positive|True Negative"),"Accept","Reject"),levels = c("Accept","Reject") %>% rev)) %>% 
   ggplot() +
   geom_tile(aes(x = human, y = ai, fill = type)) +
   geom_text(aes(x = human, y = ai, label = value)) +
@@ -60,18 +54,18 @@ ggsave(paste0("Figures/Figure2",supp,".png"), device = 'png',height = 3,width = 
 ### Figure 2 SUPP
 df %>% 
   group_by(Reflection,Committee) %>% 
-  filter(Colab == "Colab",
-         str_detect(Method,'AI')) %>% 
-  mutate(across(starts_with('n_'),min,.names =  "{.col}_min" )) %>% 
-  mutate(across(starts_with('n_'),max,.names =  "{.col}_max" )) %>% 
-  reframe(n_misses_range = paste0(n_misses_min,' - ',n_misses_max),
-            n_omits_range = paste0(n_omits_min,' - ',n_omits_max),
-            n_extras_range = paste0(n_extras_min, ' - ',n_extras_max),
-            n_finds_range = paste0(n_finds_min,' - ',n_finds_max)) %>% 
+  #filter(Colab == "Colab",
+ #        str_detect(Method,'AI')) %>% 
+  #mutate(across(starts_with('n_'),min,.names =  "{.col}_min" )) %>% 
+  #mutate(across(starts_with('n_'),max,.names =  "{.col}_max" )) %>% 
+  # reframe(n_misses_range = paste0(n_misses_min,' - ',n_misses_max),
+  #           n_omits_range = paste0(n_omits_min,' - ',n_omits_max),
+  #           n_extras_range = paste0(n_extras_min, ' - ',n_extras_max),
+  #           n_finds_range = paste0(n_finds_min,' - ',n_finds_max)) %>% 
   distinct() %>% 
   pivot_longer(starts_with('n_'), values_to = 'value',names_to = 'type') %>% 
-  mutate(human = factor(ifelse(str_detect(type,"misses|finds"),"Accept","Reject"),levels = c("Accept","Reject")),
-         ai = factor(ifelse(str_detect(type,"extras|finds"),"Accept","Reject"),levels = c("Accept","Reject") %>% rev)) %>% 
+  mutate(human = factor(ifelse(str_detect(type,"True Positive|False Negative"),"Accept","Reject"),levels = c("Accept","Reject")),
+         ai = factor(ifelse(str_detect(type,"False Positive|True Negative"),"Accept","Reject"),levels = c("Accept","Reject") %>% rev)) %>% 
   ggplot() +
   geom_tile(aes(x = human, y = ai, fill = type)) +
   geom_text(aes(x = human, y = ai, label = value)) +

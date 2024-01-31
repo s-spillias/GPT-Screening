@@ -6,6 +6,16 @@ This repo is set up to handle multiple projects. To explore data associated with
 
 Otherwise, create a new project folder and follow the steps below.
 
+### Search Screen Interactions with ChatGPT:
+https://chat.openai.com/share/59350ac4-4906-4b37-bad1-b3d0fc22455c
+https://chat.openai.com/share/06f02bc7-c062-4558-a269-0c0954be02d5
+https://chat.openai.com/share/d868a1be-2ebe-4fda-bc33-bfcedaeda77e
+https://chat.openai.com/share/22bfa6a7-7408-48cd-8a6b-591f96a4fb6b
+https://chat.openai.com/share/8d944a52-940c-4cbb-873f-e0f92626b051
+
+### Choosing the best search string
+https://chat.openai.com/share/bcf222f4-397c-4f8b-80c8-0c306241170e
+
 ### To Start :
 
 1. Run 'requirements.txt' to install package dependencies. ***I've been using a virtual environment, so you may want to do the same. But might not be necessary.
@@ -22,6 +32,6 @@ pip install -r requirements.txt
 1. Copy the .env.example file, and rename it .env. 
 2. Create / modify the screening criteria and screening settings, according to your project.
 3. Add your OpenAI key to .env
-4. Select the OpenAI model, default is "gpt-3.5-turbo-0301", other models have not been tested.
-5. Run the code. May take ~ 10 hours per 1000 articles. Cost for 3.5 Turbo will be ~ 10 USD.
-6. New files, one for each agent called '2_*.csv', and a summary file '2a_Screening_summary.csv', will be generated in the project subdirectory 'Output' which will include the results of the screen, the specific responses to each screening criteria, and the LLM's justification.
+4. Select the OpenAI model
+5. Run the code. May take ~ 10 hours per 1000 articles. 
+

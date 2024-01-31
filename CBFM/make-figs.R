@@ -1,5 +1,6 @@
 library(tidyverse)
 library(ggrepel)
+library(ggalt)
 library(patchwork)
 library(beyonce)
 library(ggbeeswarm)
@@ -13,10 +14,26 @@ file <- "Comparison_Results.xlsx"
 df = c("Human-Compare","Colab-Compare") %>% lapply(function(x) read_excel(file, sheet = x) %>%
                     mutate(Colab = ifelse(str_detect(x,"Colab"),"Colab","Human"))) %>% 
   bind_rows() %>% 
-  rename("Model" = "...1") %>% 
-  mutate(Committee = factor(ifelse(!str_detect(Model,"AI"),"Committee","Individual"), levels = c("Individual","Committee")),
-         Reflection = factor(ifelse(str_detect(Model,"Reflection"),"Reflection","Initial"), levels = c("Initial","Reflection"))) 
-
+  rename("Name" = "...1") %>% 
+  rename("Kappa" = "Kappa Statistic") %>% 
+  mutate(Parameters = case_when(str_detect(Name, 'baseline') ~ 'Random String; Temp = 0',
+                                str_detect(Name, 'temperature0') ~ 'Constant String; Temp = 0',
+                                str_detect(Name, 'temperature') ~ 'Constant String; Temp = 1',
+                                str_detect(Name, 'top_p') ~ 'Constant String; top-p = 0.2',
+                                str_detect(Name, 'set_seed') ~ 'Constant String; Random Seed; Temp = 0',
+                                TRUE ~ '_Human'),
+         Model = case_when(str_detect(Name, '3.5-turbo-0301') ~ 'gpt-3.5-turbo-0301; Dec 2023',
+                           str_detect(Name, '3.5-turbo-0613') ~ 'gpt-3.5-turbo-0613; Dec 2023',
+                           str_detect(Name, '3.5-turbo') ~ 'gpt-3.5-turbo; May 2023',
+                           str_detect(Name, 'gpt-4-1106-preview') ~ 'gpt-4-1106-preview; Dec 2023',
+                           str_detect(Name, 'gpt-4') ~ 'gpt-4; May 2023',
+                           str_detect(Name, "Human") ~ 'Human',
+                           TRUE ~ "Not DEFINED"),
+         Notation = ifelse(str_detect(Name, "mod"),"Modified SC3",""),
+         Committee = factor(ifelse(!str_detect(Name,"Initial|Reflection")|str_detect(Name,"Committee"),"Committee","Individual"), levels = c("Individual","Committee")),
+         Reflection = factor(ifelse(!str_detect(Name,"Initial"),"Reflection","Initial"), levels = c("Initial","Reflection")),
+         Method = ifelse(str_detect(Name, "AnyYes|_summary| baseline_rand_seed_"),"AnyYes",paste0(Committee,' - ',Reflection))) 
+           
 #n_paper = df %>% mutate(tot = n_misses + n_extras+ n_finds+ n_omits) %>% pull(tot) %>% 
 
 pal = c("#a6611a",
@@ -25,29 +42,31 @@ pal = c("#a6611a",
   "#018571")
 
 # Replace with your model ID
-model_id <- "Your Model ID"
+model_id <- "CBFM/AI_Output\\May\\gpt-3.5-turbo\\baseline_rand_seed.xlsx - AI - AnyYes" 
 
 # Print column names
 print(colnames(df))
 
 ### Figure 2
 df %>% 
-  filter(Model == model_id) %>% 
+  filter(Name == model_id) %>% 
+  filter(Colab == 'Colab') %>% 
   group_by(Reflection,Committee) %>% 
-  filter(Colab == "Colab",
-         Method == "AI-AnyYes"#,
-         #str_detect(Method,'AI')
-         ) %>% 
+  dplyr::select(-`Kappa`) %>% 
+  # filter(Colab == "Colab",
+  #        Method == "AI-AnyYes"#,
+  #        #str_detect(Method,'AI')
+  #        ) %>% 
   distinct() %>% 
-  pivot_longer(starts_with('n_'), values_to = 'value',names_to = 'type') %>% 
+  pivot_longer(contains(" "), values_to = 'value',names_to = 'type') %>% 
   mutate(human = factor(ifelse(str_detect(type,"True Positive|False Negative"),"Accept","Reject"),levels = c("Accept","Reject")),
-         ai = factor(ifelse(str_detect(type,"False Positive|True Negative"),"Accept","Reject"),levels = c("Accept","Reject") %>% rev)) %>% 
+         ai = factor(ifelse(str_detect(type,"False Positive|True Positive"),"Accept","Reject"),levels = c("Accept","Reject") %>% rev)) %>% 
   ggplot() +
   geom_tile(aes(x = human, y = ai, fill = type)) +
   geom_text(aes(x = human, y = ai, label = value)) +
   xlab("Human") +
   ylab("AI") +
-  scale_fill_manual(values = pal[c(2,4,1,4)] #c("tan2","forestgreen","darksalmon","forestgreen")
+  scale_fill_manual(values = pal[c(1,2,4,4)] #c("tan2","forestgreen","darksalmon","forestgreen")
   ) +
   scale_x_discrete(position = "top") +
  # facet_grid(Reflection~Committee) +
@@ -88,70 +107,115 @@ df %>%
 
 ggsave(paste0("Figures/Figure2_supp",supp,".png"), device = 'png',height = 7.59,width = 8.45)
 
+####################################
+####################################
 ### Figure 3
-df_plot = df %>% 
-  separate(Method,'id',sep = "_") %>% 
-  mutate(tot = n_misses + n_extras+ n_finds+ n_omits) %>% 
-  mutate(across(starts_with('n_'), function(x) 100*x/tot)) 
 
-df_colab = df_plot %>% filter(Colab == "Colab")
+model_pal = c("black","steelblue","pink","forestgreen",'orange') %>% rev()
+shape_pal = c(19,1,15,0,17) %>% rev()
+
+df_plot = df %>% 
+  #separate(Method,'id',sep = "_") %>% 
+  mutate(tot = `True Positive` + `True Negative` + `False Positive` + `False Negative`) %>% 
+  mutate(across(contains(' '), function(x) 100*x/tot)) %>% 
+  dplyr::select(-tot)
+
+df_colab = df_plot %>% 
+  filter(Colab == "Colab") #%>% 
+  #filter(Reflection == "Reflection",Committee == "Committee")
+ # filter(str_detect(Parameters, "Random String|Not DEFINED"))
 
 ggplot(df_plot) +
-  geom_point(data = df_colab %>% filter(str_detect(id,"AI")),
-             aes(x = n_misses, 
-             y = n_extras,
+  geom_point(data = df_colab %>% filter(str_detect(Model,"gpt")),
+             aes(x = `False Negative`, 
+             y = `False Positive`,
              col = Model,
-             shape = interaction(Reflection,Committee) ,
+             #fill = Model,
+             shape = Method,
+             # col = Parameters
 
              #col = Prompt
-             )
+             ),
+             size = 2,
+             stroke = 1,
+             #alpha = 0.5
              ) +
- geom_point(data = df_colab %>% filter(str_detect(id,"Human")),
-            aes(x = n_misses,
-                y = n_extras),
+ # geom_encircle(data = df_colab %>% filter(str_detect(Model,"gpt")),
+ #               s_shape = 1, expand = 0,
+ #               aes(x = `False Negative`, 
+ #                   y = `False Positive`, group = Model, col = Model)) +
+  geom_point(data = df_colab %>% filter(str_detect(Notation,"Modified")),
+                #s_shape = 0, expand = 0,
+                aes(x = `False Negative`, 
+                    y = `False Positive`), col = 'red', size = 0.5) +
+ geom_point(data = df_colab %>% filter(str_detect(Model,"Human")),
+            aes(x = `False Negative`,
+                y = `False Positive`),
             shape = 8, size = 2) +
-geom_text_repel(data = df_colab %>% filter(str_detect(id,"Human|AnyYes")),
-                aes(label = id, x = n_misses, y = n_extras),box.padding = 0.5,min.segment.length = 0.01) +
-  scale_shape_manual(values = c(1,16,2,17),
+geom_text_repel(data = df_colab %>% filter(str_detect(Model,"Human")),
+                aes(label = Model, x = `False Negative`, y = `False Positive`),box.padding = 0.5,min.segment.length = 0.01) +
+  geom_text_repel(data = df_colab %>% filter(str_detect(Notation,"Mod")),
+                  aes(label = Notation,x = `False Negative`, y = `False Positive`),box.padding = 0.5,min.segment.length = 0.01,size = 3) +
+  scale_shape_manual(values = shape_pal,
                      name = "AI - Method") +
-  
-  scale_color_manual(values = c("black","steelblue")) +
-  xlim(0,6.5) +
+  scale_shape_manual(values = shape_pal,name = "AI - Method") +
+  scale_color_manual(values = model_pal) +
+  scale_fill_manual(values = model_pal) +
+  xlim(0,5) +
   ylim(0,6.5) +
   theme_classic() +
+  theme(
+        axis.title.y = element_text(margin = margin(t = 0, r =-300, b = 0, l = 0))) +
  # theme(legend.position = c(0.8,0.5)) +
   xlab("False Negatives (%)") +
   ylab("False Positives (%)") +
 
-df_colab %>% filter(str_detect(id,"AI")) %>% 
+df_colab %>% filter(str_detect(Model,"gpt"),Method == 'AnyYes') %>% 
   ggplot() +
-  aes(x = "AI", 
+  aes(x = Parameters, 
       y = Kappa) +
  # geom_boxplot(outlier.shape = NA) +
-  geom_beeswarm(dodge.width=0.1,cex = 7, method = "swarm",#alpha = 0.1,  position = position_jitter(width = 0.2),
-             aes(shape = interaction(Reflection,Committee), col = Model
+  geom_hline(yintercept = (df_colab %>% filter(str_detect(Model,"Human")))$Kappa,
+                linetype = 3
+                 ) +
+  geom_point(#dodge.width=0.0,
+              #  cex = 0, method = "swarm",#alpha = 0.1,  position = position_jitter(width = 0.2),
+             aes(#interaction(Reflection,Committee), 
+                 shape = Method,
+                 col = Model,
+                 #fill = Model,
                              
                            ),
+             #alpha = 0.5,
+             size = 2, stroke = 1
           #   size = 1
              ) +
-  geom_point(data = df_colab %>% filter(str_detect(id,"Human")),
-             aes(x ="Human",
+
+  geom_point(data = df_colab  %>% filter(str_detect(Notation,"Modified")),
+             aes(x =Parameters,
                  y = Kappa),
-             shape = 8, size = 2) +
-  geom_text_repel(data = df_colab %>% filter(str_detect(id,"Human")),
-                  aes(label = id, x = "Human", y = Kappa),box.padding = 0.5,min.segment.length = 0.01) +
+             #shape = 8, 
+             size = 0.5, col = "red") +
+  geom_text_repel(data = df_colab %>% filter(str_detect(Model,"Human")),
+                  aes(label = Model, x = 0, y = Kappa),box.padding = 0.5,min.segment.length = 0.05) +
+  geom_text_repel(data = df_colab %>% filter(str_detect(Notation,"Mod")),
+                  aes(label = Notation, x = Parameters, y = Kappa),box.padding = 0.5,min.segment.length = 0.01,size = 3) +
   # geom_text_repel(data = df_colab %>% filter(str_detect(id,"AnyYes")),
   #                 aes(label = id,x = "", y = Kappa),min.segment.length = 0.01) +
   xlab("") +
-  scale_shape_manual(values = c(1,16,2,17)) +
-  scale_color_manual(values = c("black","steelblue")) +
+  ylim(0.2,1) +
+  scale_shape_manual(values = shape_pal,name = "AI - Method") +
+  scale_color_manual(values = model_pal) +
+  scale_fill_manual(values = model_pal) +
   theme_classic() +
   theme(legend.position = "none") +
-
+  coord_flip() +
   patchwork::plot_annotation(tag_levels = "a" ) +
-  plot_layout(nrow = 2,design = 'aab', heights = c(.6,.4), guides = 'collect')
-  
-ggsave(paste0("Figures/Figure3",supp,".png"), device = 'png', width = 8.5*.8, height = 4.84*.8)
+  plot_layout(nrow = 2,design = 'aa\nbb', heights = c(.7,.3), guides = 'collect')
+
+scaler = 1.0
+
+ggsave(paste0("Figures/Figure3",supp,".png"), device = 'png', width = 8.5*scaler, height = 4.84*scaler)
 #}
 
 
